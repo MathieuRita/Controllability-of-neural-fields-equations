@@ -27,12 +27,14 @@ def a(n,sigma=1,x0=0,T=np.pi,borne1=-np.pi/2,borne2=np.pi/2):
 	else :
 		return (2/np.pi)*inte[0] 
 
-four=0*X 
-for i in range(10):
-	four+=a(i)*np.cos(2*i*X)
+def fourier(n):
+	four=0*X 
+	for i in range(n):
+		four+=a(i)*np.cos(2*i*X)
+	return four
 
 plt.plot(X,gauss())
-plt.plot(X,four)
+plt.plot(X,fourier(10))
 plt.show()
 
 #2. Difference finie sur les equations de degre 3
@@ -65,7 +67,6 @@ for t in range(1,nbt):
 			xi=-np.pi/2+(i*pasx)
 			inte+=(a0+a1*np.cos(alpha*(xi-xj))*S(lda*V[t-1,i]))
 		V[t,j]=V[t-1,j]+(past/tau)*(-V[t-1,j]+(1/np.pi)*pasx*inte)
-	print(t)
 
 #Plots l'evolution des profils spatiaux
 for time in range(0,nbt):
