@@ -1,37 +1,45 @@
 import numpy as np 
-import matplotlib.pyplot as plt 
+import matplotlib
+matplotlib.use('TKAgg')
+import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import scipy.integrate as integrate
+
 
 #Params
-J0= -7.3
-J1= 11
 alpha=2
 X0=0.
-sigma=0.01
+sigma=1.
 lda=1.
-
 X=np.linspace(-np.pi/2,np.pi/2,500)
-J=J0+J1*np.cos(alpha*X)
 
-# plt.plot(X,J)
-# plt.show()
+#1. Developpement en serie de Fourier de la gaussienne en fonction de sigma
 
-a0=0.28
-a1=0.063*2
-a2=0
-a3=0
-#a2=-0.0072*2
-#a3=0.0032*2
-
-def gauss(X0,sigma=0.01):
+def gauss(X0=0,sigma=1):
 	return 1/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (X - X0)**2 / (2 * sigma**2) )
 
-four=a0+a1*np.cos(2*X)
+def a(n,sigma=1,x0=0,T=np.pi,borne1=-np.pi/2,borne2=np.pi/2):
+	def fonction(x):
+		return  np.cos(n*((2*np.pi)/T)*x)* (1/(sigma * np.sqrt(2 * np.pi))) * (np.exp( - (x - x0)**2 / (2 * sigma**2)))
+	inte=integrate.quad(fonction,borne1,borne2)
+	if n==0:
+		return (1/np.pi)*inte[0]
+	else :
+		return (2/np.pi)*inte[0] 
 
- #V0(y) entre -pi/2 et pi/2
+four=0*X 
+for i in range(10):
+	four+=a(i)*np.cos(2*i*X)
+
+plt.plot(X,gauss())
+plt.plot(X,four)
+plt.show()
+
+#2. Difference finie sur les equations de degre 3
 
 #params simu
-
+a0=a(0)
+a1=a(1)
 nbx=500
 nbt=20
 pasx=np.pi/nbx
@@ -43,13 +51,12 @@ a=0.5
 tau=past/a
 print("tau"+str(tau))
 
-
 def S(x):
 	return 1/(1+np.exp(-x))
 
+# Simulation
 V=Vin*np.ones([nbt,nbx])
 
-#Simulations 1 des equations normales
 for t in range(1,nbt):
 	for j in range(0,nbx):
 		xj=-np.pi/2+(j*pasx)
@@ -60,12 +67,28 @@ for t in range(1,nbt):
 		V[t,j]=V[t-1,j]+(past/tau)*(-V[t-1,j]+(1/np.pi)*pasx*inte)
 	print(t)
 
+#Plots l'evolution des profils spatiaux
 for time in range(0,nbt):
 	plt.plot(X,V[time,:],label="t="+str(time))
 plt.legend()
 plt.show()
 
-plt.plot(np.linspace(0.,10,nbt),V[:,100])
-plt.plot(np.linspace(0.,10,nbt),V[:,0])
-plt.plot(np.linspace(0.,10,nbt),V[:,200])
+#Animation
+fig, ax = plt.subplots()
+
+line, = ax.plot(X, V[0,:])
+
+def init():  # only required for blitting to give a clean slate.
+    line.set_ydata([np.nan] * len(X))
+    return line,
+
+
+def animate(i):
+    line.set_ydata(V[i,:])  # update the data.
+    return line,
+
+
+ani = animation.FuncAnimation(
+    fig, animate, init_func=init, interval=1000, blit=True, save_count=None)
+
 plt.show()
